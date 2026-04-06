@@ -1,0 +1,172 @@
+DynamicBully.java
+import java.util.Scanner;
+public class DynamicBully {
+static boolean[] active;
+static int totalNodes;
+public static void main(String[] args) {
+Scanner sc = new Scanner(System.in);
+System.out.print("Enter total number of nodes: ");
+totalNodes = sc.nextInt();
+active = new boolean[totalNodes + 1];
+// Make all nodes active initially
+for (int i = 1; i <= totalNodes; i++) {
+active[i] = true;
+}
+System.out.print("Enter the node that fails (1 to " + totalNodes + "): ");
+int failed = sc.nextInt();
+active[failed] = false;
+System.out.print("Enter the node that detects the failure and starts election: ");
+int starter = sc.nextInt();
+System.out.println("\n--- Election Process Started ---");
+startElection(starter);
+sc.close();
+}
+static void startElection(int starter) {
+boolean higherNodeResponded = false;
+for (int i = starter + 1; i <= totalNodes; i++) {if (active[i]) {
+System.out.println("Node " + starter + " sends ELECTION to Node " + i);
+System.out.println("Node " + i + " responds OK to Node " + starter);
+higherNodeResponded = true;
+// Higher node takes over the election
+startElection(i);
+return; // Current node stops its own election process
+}
+}
+if (!higherNodeResponded) {
+System.out.println("\n*** Node " + starter + " IS THE NEW LEADER ***");
+for (int i = 1; i <= totalNodes; i++) {
+if (active[i] && i != starter) {
+System.out.println("Node " + starter + " sends LEADER message to Node " + i);
+}
+}
+}
+}
+}
+
+
+
+RingSimulation.java
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Scanner;
+class RingNode {
+private int id;
+private boolean isActive;
+private int leaderId;
+private RingNode nextNode;
+public RingNode(int id) {
+this.id = id;
+this.isActive = true;
+}
+public void setNextNode(RingNode nextNode) {
+this.nextNode = nextNode;
+}
+public void fail() {
+this.isActive = false;
+System.out.println("Node " + id + " has failed.");
+}
+public void startElection() {
+if (!isActive) return;
+List<Integer> activeIds = new ArrayList<>();
+activeIds.add(this.id);
+System.out.println("[Node " + id + "] Starting election. Passing list: " + activeIds);
+nextNode.receiveElectionMessage(activeIds);
+}
+public void receiveElectionMessage(List<Integer> activeIds) {
+if (!isActive) {
+// If dead, silently pass the message to the next node in the ring
+nextNode.receiveElectionMessage(activeIds);
+return;
+}if (activeIds.contains(this.id)) {
+// The message has traveled full circle. Time to pick a leader.
+int newLeader = Collections.max(activeIds);
+System.out.println("\n--- Election Over. Node " + newLeader + " is the Leader ---");
+announceCoordinator(newLeader);
+} else {
+// Add own ID to the list and pass it on
+activeIds.add(this.id);
+System.out.println("[Node " + id + "] Received list. Adding self and passing: " + activeIds);
+nextNode.receiveElectionMessage(activeIds);
+}
+}
+public void announceCoordinator(int newLeaderId) {
+if (this.leaderId == newLeaderId) {
+return; // Message has gone full circle, stop broadcasting
+}
+this.leaderId = newLeaderId;
+System.out.println("[Node " + id + "] Acknowledged new Leader: " + leaderId);
+// Pass the announcement to the next active node
+if (nextNode != null) {
+nextNode.announceCoordinator(newLeaderId);
+}
+}
+}
+public class RingSimulation {
+public static void main(String[] args) {
+Scanner scanner = new Scanner(System.in);
+// 1. Get total number of nodes
+System.out.print("Enter total number of nodes: ");
+int totalNodes = scanner.nextInt();
+RingNode[] nodes = new RingNode[totalNodes];
+for (int i = 0; i < totalNodes; i++) {
+nodes[i] = new RingNode(i + 1);}
+// 2. Link nodes to form a logical ring dynamically
+for (int i = 0; i < totalNodes; i++) {
+nodes[i].setNextNode(nodes[(i + 1) % totalNodes]);
+}
+// 3. Get the node that fails
+System.out.print("Enter the ID of the node that fails (1 to " + totalNodes + "): ");
+int failedNodeId = scanner.nextInt();
+// Arrays are 0-indexed, so we subtract 1 from the user's input
+nodes[failedNodeId - 1].fail();
+// 4. Get the node that starts the election
+System.out.print("Enter the ID of the node that starts the election (1 to " + totalNodes + "): ");
+int startNodeId = scanner.nextInt();
+nodes[startNodeId - 1].startElection();
+scanner.close();
+}
+}
+
+
+Run DynamicBully
+
+
+javac DynamicBully.java
+java DynamicBully
+
+
+
+sample run :
+Enter total number of nodes: 5
+Enter failed node: 2
+Enter node that starts election: 1
+
+Node 1 -> ELECTION -> Node 3
+Node 3 -> OK -> Node 1
+Node 3 -> ELECTION -> Node 4
+Node 4 -> OK -> Node 3
+Node 4 -> ELECTION -> Node 5
+Node 5 -> OK -> Node 4
+
+*** Node 5 is LEADER ***
+
+Run Ring  (new terminal)
+
+
+javac RingSimulation.java
+java RingSimulation
+
+Enter number of nodes: 5
+Enter failed node: 2
+Enter starter node: 1
+
+Node 1 starts election: [1]
+Node 3 passing list: [1, 3]
+Node 4 passing list: [1, 3, 4]
+Node 5 passing list: [1, 3, 4, 5]
+
+Leader elected: Node 5
+Node 1 acknowledges Leader 5
+Node 3 acknowledges Leader 5
+...

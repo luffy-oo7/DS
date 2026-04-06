@@ -1,0 +1,77 @@
+import java.util.*;
+
+class TokenRing {
+    public static void main(String args[]) {
+
+        Scanner scan = new Scanner(System.in);
+
+        System.out.print("Enter number of nodes: ");
+        int n = scan.nextInt();
+
+        int token = 0; // initial token at node 0
+        int choice;
+
+        // Display ring
+        System.out.print("Ring: ");
+        for (int i = 0; i < n; i++) {
+            System.out.print(i + " ");
+        }
+        System.out.println("0");
+
+        do {
+            System.out.print("\nEnter sender: ");
+            int s = scan.nextInt();
+
+            System.out.print("Enter receiver: ");
+            int r = scan.nextInt();
+
+            System.out.print("Enter data: ");
+            int data = scan.nextInt();
+
+            // Token passing
+            System.out.print("Token passing: ");
+            int i = token;
+            while (i != s) {
+                System.out.print(i + " -> ");
+                i = (i + 1) % n;
+            }
+            System.out.println(s);
+
+            // Sending data
+            System.out.println("Sender " + s + " sending data: " + data);
+
+            i = (s + 1) % n;
+            while (i != r) {
+                System.out.println("Data " + data + " forwarded by " + i);
+                i = (i + 1) % n;
+            }
+
+            System.out.println("Receiver " + r + " received data: " + data);
+
+            token = s; // update token position
+
+            System.out.print("\nSend again? (1-Yes / 0-No): ");
+            choice = scan.nextInt();
+
+        } while (choice == 1);
+
+        System.out.println("Program ended.");
+    }
+}
+
+
+
+TERMINAL
+How to change the version of java 11 to java 8
+
+sudo apt update
+sudo apt install openjdk-8-jdk
+update-alternatives --list java
+sudo update-alternatives --config java 
+(press 2)
+sudo update-alternatives --config javac
+(press 2)
+java -version
+javac -version
+
+
