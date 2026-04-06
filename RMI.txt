@@ -1,0 +1,90 @@
+AddClient.java
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
+public class AddClient {
+
+    // Each thread acts as a separate client request
+    static class ClientThread extends Thread {
+        int a, b;
+        String threadName;
+
+        ClientThread(String name, int a, int b) {
+            this.threadName = name;
+            this.a = a;
+            this.b = b;
+        }
+
+        public void run() {
+            try {
+                Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+                AddInterface stub = (AddInterface) registry.lookup("AddServer");
+                int result = stub.add(a, b);
+                System.out.println(threadName + " -> " + a + " + " + b + " = " + result);
+            } catch (Exception e) {
+                System.err.println(threadName + " error: " + e.getMessage());
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        // Launch multiple client threads simultaneously
+        ClientThread t1 = new ClientThread("Thread-1", 10, 20);
+        ClientThread t2 = new ClientThread("Thread-2", 55, 45);
+        ClientThread t3 = new ClientThread("Thread-3", 100, 200);
+
+        t1.start();
+        t2.start();
+        t3.start();
+    }
+}
+
+
+
+AddInterface.java
+import java.rmi.Remote;
+import java.rmi.RemoteException;
+
+public interface AddInterface extends Remote {
+    int add(int a, int b) throws RemoteException;
+}
+
+
+
+AddServer.java
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+
+public class AddServer extends UnicastRemoteObject implements AddInterface {
+
+    protected AddServer() throws RemoteException {
+        super();
+    }
+
+    @Override
+    public int add(int a, int b) throws RemoteException {
+        System.out.println("Server: Adding " + a + " + " + b);
+        return a + b;
+    }
+}
+
+
+
+AddServerMain
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+
+public class AddServerMain {
+    public static void main(String[] args) {
+        try {
+            AddServer obj = new AddServer();
+            Registry registry = LocateRegistry.createRegistry(1099); // start rmiregistry
+            registry.rebind("AddServer", obj);
+            System.out.println("Server is ready and waiting for clients...");
+        } catch (Exception e) {
+            System.err.println("Server error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
+
