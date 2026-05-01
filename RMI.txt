@@ -1,90 +1,68 @@
-AddClient.java
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
+AddImplementation.java
+import java.rmi.*;
+import java.rmi.server.*;
 
-public class AddClient {
+public class AddImplementation extends UnicastRemoteObject implements AddInterface {
 
-    // Each thread acts as a separate client request
-    static class ClientThread extends Thread {
-        int a, b;
-        String threadName;
-
-        ClientThread(String name, int a, int b) {
-            this.threadName = name;
-            this.a = a;
-            this.b = b;
-        }
-
-        public void run() {
-            try {
-                Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-                AddInterface stub = (AddInterface) registry.lookup("AddServer");
-                int result = stub.add(a, b);
-                System.out.println(threadName + " -> " + a + " + " + b + " = " + result);
-            } catch (Exception e) {
-                System.err.println(threadName + " error: " + e.getMessage());
-            }
-        }
+    public AddImplementation() throws RemoteException {
+        super();
     }
 
-    public static void main(String[] args) {
-        // Launch multiple client threads simultaneously
-        ClientThread t1 = new ClientThread("Thread-1", 10, 20);
-        ClientThread t2 = new ClientThread("Thread-2", 55, 45);
-        ClientThread t3 = new ClientThread("Thread-3", 100, 200);
-
-        t1.start();
-        t2.start();
-        t3.start();
+    @Override
+    public int add(int x, int y) {
+        return (x + y);
     }
 }
 
 
 
 AddInterface.java
-import java.rmi.Remote;
-import java.rmi.RemoteException;
+import java.rmi.*;
 
 public interface AddInterface extends Remote {
-    int add(int a, int b) throws RemoteException;
+
+    // The method we want to call remotely
+    public int add(int x, int y) throws RemoteException;
 }
 
 
 
-AddServer.java
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
+Server.java
+import java.rmi.*;
+import java.rmi.registry.*;
 
-public class AddServer extends UnicastRemoteObject implements AddInterface {
+public class Server {
 
-    protected AddServer() throws RemoteException {
-        super();
-    }
-
-    @Override
-    public int add(int a, int b) throws RemoteException {
-        System.out.println("Server: Adding " + a + " + " + b);
-        return a + b;
-    }
-}
-
-
-
-AddServerMain
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-
-public class AddServerMain {
     public static void main(String[] args) {
         try {
-            AddServer obj = new AddServer();
-            Registry registry = LocateRegistry.createRegistry(1099); // start rmiregistry
-            registry.rebind("AddServer", obj);
-            System.out.println("Server is ready and waiting for clients...");
+            AddInterface obj = new AddImplementation();
+
+            // Bind the remote object in the registry
+            Naming.rebind("AddService", obj);
+
+            System.out.println("Server is ready.");
         } catch (Exception e) {
-            System.err.println("Server error: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Server failed: " + e);
         }
     }
 }
 
+
+
+Client.java
+import java.rmi.*;
+
+public class Client {
+
+    public static void main(String[] args) {
+        try {
+            // Locate the remote object
+            AddInterface obj = (AddInterface) Naming.lookup("rmi://localhost/AddService");
+
+            int result = obj.add(10, 20);
+            System.out.println("Addition Result: " + result);
+        } catch (Exception e) {
+            System.out.println("Client Error: " + e);
+        }
+    }
+}
