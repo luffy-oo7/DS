@@ -1,0 +1,70 @@
+Server.py
+import socket, threading, datetime, time
+
+clients = {}
+
+def handle(conn, addr):
+    print(f"{addr[0]}:{addr[1]} connected")
+    while True:
+        try:
+            t = datetime.datetime.fromisoformat(conn.recv(1024).decode())
+            diff = datetime.datetime.now() - t
+            clients[addr] = (conn, diff)
+            print(f"Client Data updated: {addr}")
+        except:
+            break
+
+def synchronize():
+    while True:
+        print("\nNew synchronization cycle")
+        print(f"Clients: {len(clients)}")
+
+        if clients:
+            avg = sum([d for _, d in clients.values()], datetime.timedelta()) / len(clients)
+
+            for addr, (conn, d) in clients.items():
+                offset = (avg - d).total_seconds()
+                conn.send(str(offset).encode())
+                print(f"Client Data updated: {addr}")
+
+        time.sleep(5)
+
+s = socket.socket()
+s.bind(('', 8080))
+s.listen()
+
+threading.Thread(target=synchronize, daemon=True).start()
+
+while True:
+    conn, addr = s.accept()
+    threading.Thread(target=handle, args=(conn, addr), daemon=True).start()
+Client.py
+import socket, threading, datetime, time
+
+offset = datetime.timedelta()
+
+def send_time(c):
+    while True:
+        t = (datetime.datetime.now() + offset).isoformat()
+        c.send(t.encode())
+        print("Time sent")
+        time.sleep(5)
+
+def receive_offset(c):
+    global offset
+    while True:
+        correction = float(c.recv(1024).decode())
+        offset += datetime.timedelta(seconds=correction)
+        print(f"Offset updated: {offset}")
+
+c = socket.socket()
+c.connect(('127.0.0.1', 8080))
+
+threading.Thread(target=send_time, args=(c,), daemon=True).start()
+threading.Thread(target=receive_offset, args=(c,), daemon=True).start()
+
+while True:
+    time.sleep(1)
+
+#python3 Server.py
+#python3 Client.py
