@@ -1,0 +1,97 @@
+Server.py
+from dateutil import parser
+import socket, threading, datetime, time
+
+clients = {}
+
+def handle(conn, addr):
+    while True:
+        try:
+            data = conn.recv(1024).decode()
+            if not data:
+                break
+            t = parser.parse(data)
+            diff = datetime.datetime.now() - t
+            clients[addr] = (conn, diff)
+            print("Client Data updated:", addr)
+        except:
+            break
+    if addr in clients:
+        del clients[addr]
+    print(addr, "disconnected")
+
+
+def sync():
+    while True:
+        print("\nNew synchronization cycle")
+        print("Clients:", len(clients))
+        if clients:
+            avg = sum([c[1] for c in clients.values()], datetime.timedelta()) / len(clients)
+            
+            for addr, (conn, d) in list(clients.items()):
+                try:
+                    offset = (avg - d).total_seconds()
+                    conn.send(str(offset).encode())
+                except:
+                    pass
+        time.sleep(5)
+
+
+s = socket.socket()
+s.bind(('', 8080))
+s.listen()
+
+print("Server started.jodd..\n")
+
+threading.Thread(target=sync, daemon=True).start()
+
+while True:
+    conn, addr = s.accept()
+    print(f"{addr[0]}:{addr[1]} connected")
+    threading.Thread(target=handle, args=(conn, addr), daemon=True).start()
+
+
+Clent.py
+from dateutil import parser
+import socket, threading, datetime, time
+offset = datetime.timedelta(0)
+def send(c):
+    while True:
+        try:
+            c.send(str(datetime.datetime.now()+offset).encode())
+            print("Time sent")
+            time.sleep(5)
+        except:
+            break
+
+
+def receive(c):
+    global offset
+    while True:
+        try:
+            data = c.recv(1024).decode()
+            if not data:
+                break
+
+            correction = float(data)
+            offset += datetime.timedelta(seconds=correction)
+
+            print("Offset updated:", offset)
+
+        except:
+            break
+
+
+c = socket.socket()
+c.connect(('127.0.0.1', 8080))
+
+threading.Thread(target=send, args=(c,), daemon=True).start()
+threading.Thread(target=receive, args=(c,), daemon=True).start()
+
+while True:
+    time.sleep(1)
+
+
+#python3 Server.py
+#New Terminal
+#python3 Client.py
