@@ -41,22 +41,17 @@ public class CalculatorServer {
     public static void main(String[] args) {
         try {
             ORB orb = ORB.init(args, null);
-
-            // Activate POA
             POA rootpoa = POAHelper.narrow(
                 orb.resolve_initial_references("RootPOA")
             );
             rootpoa.the_POAManager().activate();
 
-            // Create servant
             CalculatorImpl impl = new CalculatorImpl();
-
-            // Convert servant to CORBA reference
+            
             Calculator ref = CalculatorHelper.narrow(
                 rootpoa.servant_to_reference(impl)
             );
 
-            // Naming Service (clean version)
             NamingContextExt nc = NamingContextExtHelper.narrow(
                 orb.resolve_initial_references("NameService")
             );
@@ -84,7 +79,6 @@ public class CalculatorClient {
         try {
             ORB orb = ORB.init(args, null);
 
-            // Naming Service (clean version)
             NamingContextExt nc = NamingContextExtHelper.narrow(
                 orb.resolve_initial_references("NameService")
             );
