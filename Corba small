@@ -1,0 +1,111 @@
+Calculator.idl
+module CalculatorApp {
+    interface Calculator {
+        double add(in double a, in double b);
+        double sub(in double a, in double b);
+        double mul(in double a, in double b);
+        double div(in double a, in double b);
+    };
+};
+
+
+
+CalculatorImpl.java
+import CalculatorApp.CalculatorPOA;
+class CalculatorImpl extends CalculatorPOA {
+    private org.omg.CORBA.ORB orb;
+    public void setORB(org.omg.CORBA.ORB orb_val) {
+        orb = orb_val;
+    }
+    public double add(double a, double b) {
+        return a + b;
+    }
+    public double sub(double a, double b) {
+        return a - b;
+    }
+    public double mul(double a, double b) {
+        return a * b;
+    }
+    public double div(double a, double b) {
+        return a / b;
+    }
+}
+
+
+import CalculatorApp.*;
+import org.omg.CosNaming.*;
+import org.omg.CORBA.*;
+import org.omg.PortableServer.*;
+
+public class CalculatorServer {
+    public static void main(String[] args) {
+        try {
+            ORB orb = ORB.init(args, null);
+
+            // Activate POA
+            POA rootpoa = POAHelper.narrow(
+                orb.resolve_initial_references("RootPOA")
+            );
+            rootpoa.the_POAManager().activate();
+
+            // Create servant
+            CalculatorImpl impl = new CalculatorImpl();
+
+            // Convert servant to CORBA reference
+            Calculator ref = CalculatorHelper.narrow(
+                rootpoa.servant_to_reference(impl)
+            );
+
+            // Naming Service (clean version)
+            NamingContextExt nc = NamingContextExtHelper.narrow(
+                orb.resolve_initial_references("NameService")
+            );
+
+            nc.rebind(nc.to_name("Calc"), ref);
+
+            System.out.println("Server ready...");
+            orb.run();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
+import CalculatorApp.*;
+import org.omg.CosNaming.*;
+import org.omg.CORBA.*;
+import java.util.Scanner;
+
+public class CalculatorClient {
+    public static void main(String[] args) {
+        try {
+            ORB orb = ORB.init(args, null);
+
+            // Naming Service (clean version)
+            NamingContextExt nc = NamingContextExtHelper.narrow(
+                orb.resolve_initial_references("NameService")
+            );
+
+            Calculator calc = CalculatorHelper.narrow(
+                nc.resolve_str("Calc")
+            );
+
+            Scanner sc = new Scanner(System.in);
+
+            System.out.print("Enter two numbers: ");
+            double a = sc.nextDouble();
+            double b = sc.nextDouble();
+
+            System.out.println("Add: " + calc.add(a, b));
+            System.out.println("Sub: " + calc.sub(a, b));
+            System.out.println("Mul: " + calc.mul(a, b));
+            System.out.println("Div: " + calc.div(a, b));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
