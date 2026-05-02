@@ -1,0 +1,115 @@
+Bully.java
+import java.util.*;
+public class Bully {
+    static boolean[] active;
+    static int n;
+
+    static void elect(int s) {
+        for (int i = s + 1; i <= n; i++) {
+            if (active[i]) {
+                System.out.println("Node " + s + " -> ELECTION -> Node " + i);
+                System.out.println("Node " + i + " -> OK -> Node " + s);
+                elect(i);
+                return;
+            }
+        }
+
+        System.out.println("\n*** Node " + s + " is LEADER ***\n");
+        for (int i = 1; i <= n; i++)
+            if (active[i] && i != s)
+                System.out.println("Node " + s + " sends COORDINATOR to Node " + i);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter total number of nodes: ");
+        n = sc.nextInt();
+
+        active = new boolean[n + 1];
+        Arrays.fill(active, true);
+
+        System.out.print("Enter failed node (1 to " + n + "): ");
+        active[sc.nextInt()] = false;
+
+        System.out.print("Enter node that starts election: ");
+        System.out.println("\n--- Election Process Started ---\n");
+
+        elect(sc.nextInt());
+    }
+}
+
+
+import java.util.*;
+
+class Node {
+    int id;
+    boolean active = true;
+    int leader = -1;
+    Node next;
+
+    Node(int id) { this.id = id; }
+
+    void startElection() {
+        if (!active) return;
+        List<Integer> list = new ArrayList<>();
+        list.add(id);
+        System.out.println("\nNode " + id + " starts election " + list);
+        next.receive(list);
+    }
+
+    void receive(List<Integer> list) {
+        if (!active) { next.receive(list); return; }
+
+        if (list.contains(id)) {
+            int lead = Collections.max(list);
+            System.out.println("\nLeader elected: " + lead);
+            announce(lead);
+        } else {
+            list.add(id);
+            System.out.println("Node " + id + " passes " + list);
+            next.receive(list);
+        }
+    }
+
+    void announce(int lead) {
+    	if(!active){
+    		next.announce(lead);
+    		return;
+    	}
+        if (leader == lead) return;
+        leader = lead;
+        System.out.println("Node " + id + " acknowledges Leader " + lead);
+        next.announce(lead);
+    }
+}
+
+
+
+public class Ring {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of nodes: ");
+        int n = sc.nextInt();
+
+        Node[] nodes = new Node[n];
+        for (int i = 0; i < n; i++)
+            nodes[i] = new Node(i + 1);
+
+        for (int i = 0; i < n; i++)
+            nodes[i].next = nodes[(i + 1) % n];
+
+        System.out.print("Enter failed node: ");
+        nodes[sc.nextInt() - 1].active = false;
+
+        System.out.print("Enter starter node: ");
+        nodes[sc.nextInt() - 1].startElection();
+
+        sc.close();
+    }
+}
+
+//javac *.java
+//java Bully
+//java Ring
