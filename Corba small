@@ -36,7 +36,6 @@ import CalculatorApp.*;
 import org.omg.CosNaming.*;
 import org.omg.CORBA.*;
 import org.omg.PortableServer.*;
-
 public class CalculatorServer {
     public static void main(String[] args) {
         try {
@@ -45,22 +44,16 @@ public class CalculatorServer {
                 orb.resolve_initial_references("RootPOA")
             );
             rootpoa.the_POAManager().activate();
-
-            CalculatorImpl impl = new CalculatorImpl();
-            
+            CalculatorImpl impl = new CalculatorImpl(); 
             Calculator ref = CalculatorHelper.narrow(
                 rootpoa.servant_to_reference(impl)
             );
-
             NamingContextExt nc = NamingContextExtHelper.narrow(
                 orb.resolve_initial_references("NameService")
             );
-
             nc.rebind(nc.to_name("Calc"), ref);
-
             System.out.println("Server ready...");
             orb.run();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,28 +71,40 @@ public class CalculatorClient {
     public static void main(String[] args) {
         try {
             ORB orb = ORB.init(args, null);
-
             NamingContextExt nc = NamingContextExtHelper.narrow(
                 orb.resolve_initial_references("NameService")
             );
-
             Calculator calc = CalculatorHelper.narrow(
                 nc.resolve_str("Calc")
             );
-
             Scanner sc = new Scanner(System.in);
-
             System.out.print("Enter two numbers: ");
             double a = sc.nextDouble();
             double b = sc.nextDouble();
-
             System.out.println("Add: " + calc.add(a, b));
             System.out.println("Sub: " + calc.sub(a, b));
             System.out.println("Mul: " + calc.mul(a, b));
             System.out.println("Div: " + calc.div(a, b));
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 }
+
+
+
+/*
+idlj -fall Calculator.idl
+javac CalculatorApp/*.java *.java
+tnameserv -ORBInitialPort 1050
+java CalculatorServer -ORBInitialPort 1050 -ORBInitialHost localhost (new terminal)
+java CalculatorClient -ORBInitialPort 1050 -ORBInitialHost localhost (new terminal)
+
+Java version 
+sudo apt update
+sudo apt install openjdk-8-jdk
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+java -version
+javac -version
+*/
