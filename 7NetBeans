@@ -1,0 +1,60 @@
+File New Project JAva web Web Application
+
+PRoject name Assignment 7
+
+Glassfish server JAva ee 7 web
+
+No framework
+
+
+--------------------------------------------------
+
+Assignment 7 new Webservice
+
+MycalculatorWebService
+package com.myservice create from scratch
+
+-------------------------------------------------
+MycalulatorWebService Add operation 
+
+addition double add parameter num1 num2 double
+
+change return in code
+
+-------------------------------------------------
+Assignment 7 build deploy
+
+Mycalculatorwebservice Test web service
+
+--------------------------------------------------
+
+minimize assignment 7
+file new project java webapplication 
+name calculatorwebserviceclient finish
+
+-------------------------------------------------
+ window ide tools pallete
+drag form into body 
+action calculatorservlet get ok
+drag text input
+<input type="submit" value="submit"/>
+
+-------------------------------------------------------
+calculatorwebserviceclient new web service client browse mycalculatorwebservice ok finish
+
+---------------------------------------------
+calculatorwebserviceclient new servelet calculatorservlet next web.xml check finish
+
+drag all addition ,sub methods
+
+double num1,num2
+num1 = Double.parseDouble(request.getParameter("number1"));
+num2 = Double.parseDouble(request.getParameter("number2"));
+
+
+in body
+<h1>Addition is: "+addition(num1,num2)+"</h1>");
+
+-------------------------------------------------
+calculatorwebserviceclient clean and build
+webpages webinf index.html run file
