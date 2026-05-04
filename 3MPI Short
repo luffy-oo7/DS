@@ -39,3 +39,11 @@ int main(int argc, char *argv[]){
     MPI_Finalize();
     return 0;
 }
+
+
+
+TERMINAL
+sudo apt update
+sudo apt install mpich
+mpicc sum_array_mpi.c -o sum
+mpirun -np 4 ./sum
