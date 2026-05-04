@@ -113,3 +113,40 @@ public class Ring {
 //javac *.java
 //java Bully
 //java Ring
+Run DynamicBully
+
+/*
+
+sample run :
+Enter total number of nodes: 5
+Enter failed node: 2
+Enter node that starts election: 1
+
+Node 1 -> ELECTION -> Node 3
+Node 3 -> OK -> Node 1
+Node 3 -> ELECTION -> Node 4
+Node 4 -> OK -> Node 3
+Node 4 -> ELECTION -> Node 5
+Node 5 -> OK -> Node 4
+
+*** Node 5 is LEADER ***
+
+Run Ring  (new terminal)
+
+
+javac RingSimulation.java
+java RingSimulation
+
+Enter number of nodes: 5
+Enter failed node: 2
+Enter starter node: 1
+
+Node 1 starts election: [1]
+Node 3 passing list: [1, 3]
+Node 4 passing list: [1, 3, 4]
+Node 5 passing list: [1, 3, 4, 5]
+
+Leader elected: Node 5
+Node 1 acknowledges Leader 5
+Node 3 acknowledges Leader 5
+*/
