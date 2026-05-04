@@ -66,3 +66,14 @@ public class Client {
         }
     }
 }
+
+
+/*
+How to run
+javac *.java
+rmiregistry
+
+java Server
+open another terminal
+java Client
+*/
